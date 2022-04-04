@@ -1,0 +1,56 @@
+version: '3.2'
+
+networks:
+  shipments-network:
+    driver: bridge
+  postgres-network:
+    driver: bridge
+
+services:
+  RabbitMQ:
+    container_name: 'rabbitmq'
+    image: rabbitmq:3-management-alpine
+      restart: always
+    environment:
+      RABBIT_PORT: '5672'
+      RABBITMQ_DEFAULT_PASS: 'guest'
+      RABBITMQ_DEFAULT_USER: 'guest'
+    ports:
+      - 15672:15672
+      - 5672:5672
+    volumes:
+      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+    networks:
+      - shipments-network
+
+  POSTGRES:
+    image: postgres
+    container_name: container_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: 'admin'
+      POSTGRES_PASSWORD: 'admin'
+      PGDATA: /data/postgres
+    volumes:
+      - ~/postgres:/data/postgres
+    ports:
+      - 5432:5432
+    networks:
+      - postgres-network
+
+  PGADMIN:
+    container_name: container_pgadmin
+    image: dpage/pgadmin4
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: 'admin@admin.com'
+      PGADMIN_DEFAULT_PASSWORD: 'admin'
+    volumes:
+      - ~/pgadmin:/var/lib/pgadmin
+    ports:
+      - 16543:80
+    networks:
+      - postgres-network
+    depends_on:
+      - POSTGRES
